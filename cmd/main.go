@@ -8,6 +8,10 @@ import (
 	"task/repository"
 	"time"
 
+	_ "task/docs"
+
+	httpSwagger "github.com/swaggo/http-swagger"
+
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 )
@@ -40,6 +44,8 @@ func main() {
 	router.HandleFunc("/people", handlers.CreatePerson).Methods("POST")
 	router.HandleFunc("/people", handlers.UpdatePerson).Methods("PUT")
 	router.HandleFunc("/people", handlers.DeletePerson).Methods("DELETE")
+
+	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 
 	port := os.Getenv("PORT")
 	if port == "" {

@@ -25,6 +25,24 @@ func responseError(w http.ResponseWriter, code int, err error) {
 	response(w, code, map[string]string{"error :": err.Error()})
 }
 
+// GetPeople godoc
+// @Summary Получение списка людей
+// @Description Получение списка людей с фильтрацией по параметрам (id, name, surname, patronymic, age, gender, nationality) и пагинацией.
+// @Tags people
+// @Accept json
+// @Produce json
+// @Param id query int false "ID человека"
+// @Param name query string false "Имя человека"
+// @Param surname query string false "Фамилия человека"
+// @Param patronymic query string false "Отчество человека"
+// @Param age query int false "Возраст человека"
+// @Param gender query string false "Пол человека"
+// @Param nationality query string false "Национальность человека"
+// @Param limit query int false "Лимит записей (по умолчанию 10)"
+// @Param offset query int false "Смещение для пагинации (по умолчанию 0)"
+// @Success 200 {array} models.Person
+// @Failure 500 {object} map[string]string
+// @Router /people [get]
 func GetPeople(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 	name := r.URL.Query().Get("name")
@@ -62,6 +80,17 @@ func GetPeople(w http.ResponseWriter, r *http.Request) {
 	response(w, http.StatusOK, people)
 }
 
+// CreatePerson godoc
+// @Summary Создание нового человека
+// @Description Создает новую запись о человеке. При создании происходит обогащение данных через внешние API.
+// @Tags people
+// @Accept json
+// @Produce json
+// @Param person body models.Person true "Данные нового человека"
+// @Success 201 {object} models.Person
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /people [post]
 func CreatePerson(w http.ResponseWriter, r *http.Request) {
 	var input models.Person
 
@@ -91,6 +120,19 @@ func CreatePerson(w http.ResponseWriter, r *http.Request) {
 	response(w, http.StatusCreated, input)
 }
 
+// UpdatePerson godoc
+// @Summary Обновление данных человека
+// @Description Обновляет данные существующего человека по ID. ID передается как query-параметр.
+// @Tags people
+// @Accept json
+// @Produce json
+// @Param id query int true "ID человека"
+// @Param person body models.UpdatePerson true "Данные для обновления"
+// @Success 200 {object} nil
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /people [put]
 func UpdatePerson(w http.ResponseWriter, r *http.Request) {
 	input := new(models.UpdatePerson)
 
@@ -140,6 +182,17 @@ func UpdatePerson(w http.ResponseWriter, r *http.Request) {
 	response(w, http.StatusOK, nil)
 }
 
+// DeletePerson godoc
+// @Summary Удаление человека
+// @Description Удаляет запись о человеке по ID. ID передается как query-параметр.
+// @Tags people
+// @Accept json
+// @Produce json
+// @Param id query int true "ID человека"
+// @Success 204 {object} nil
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /people [delete]
 func DeletePerson(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))
 	if err != nil {
