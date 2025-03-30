@@ -6,11 +6,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var Logger = logrus.New()
+var Logger *logrus.Logger
 
 func LoadLoger() {
 
-	Logger.SetLevel(logrus.InfoLevel)
+	Logger = logrus.New()
+
+	Logger.SetLevel(logrus.DebugLevel)
 
 	Logger.SetFormatter(&logrus.TextFormatter{
 		FullTimestamp: true,

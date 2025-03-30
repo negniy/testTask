@@ -29,6 +29,7 @@ func GetPeople(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 	name := r.URL.Query().Get("name")
 	surname := r.URL.Query().Get("surname")
+	patronymic := r.URL.Query().Get("patronymic")
 	ageStr := r.URL.Query().Get("age")
 	gender := r.URL.Query().Get("gender")
 	nationality := r.URL.Query().Get("nationality")
@@ -52,7 +53,7 @@ func GetPeople(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	people, err := repository.GetPeople(id, name, surname, ageStr, gender, nationality, limit, offset)
+	people, err := repository.GetPeople(id, name, surname, patronymic, ageStr, gender, nationality, limit, offset)
 	if err != nil {
 		responseError(w, http.StatusInternalServerError, err)
 		return
@@ -100,19 +101,20 @@ func UpdatePerson(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	id, err := strconv.Atoi(r.PathValue("id"))
+	id, err := strconv.Atoi(r.URL.Query().Get("id"))
 	if err != nil {
 		config.Logger.Debug("Ошибка парсинга id: ", err)
 		responseError(w, http.StatusBadRequest, err)
 	}
 
-	existed, err := repository.GetPeople(strconv.Itoa(id), "", "", "", "", "", 0, 1)
+	existed, err := repository.GetPeople(strconv.Itoa(id), "", "", "", "", "", "", 1, 0)
 	if err != nil {
 		config.Logger.Debug("Ошибка поиска: ", err)
 		responseError(w, http.StatusNotFound, err)
 	}
 
 	exist := existed[0]
+	config.Logger.Debug("Найденный человек ", err)
 
 	switch {
 	case input.Name != nil:
@@ -139,7 +141,7 @@ func UpdatePerson(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeletePerson(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(r.PathValue("id"))
+	id, err := strconv.Atoi(r.URL.Query().Get("id"))
 	if err != nil {
 		config.Logger.Debug("Ошибка парсинга id: ", err)
 		responseError(w, http.StatusBadRequest, err)

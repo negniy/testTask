@@ -8,6 +8,7 @@ import (
 	"task/models"
 
 	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
 var db *gorm.DB
@@ -32,7 +33,7 @@ func LoadDB() {
 	config.Logger.Debug("Успешно подключено к базе данных PostgreSQL")
 }
 
-func GetPeople(idStr, name, surname, ageStr, gender, nationality string, limit, offset int) ([]models.Person, error) {
+func GetPeople(idStr, name, surname, patronymic, ageStr, gender, nationality string, limit, offset int) ([]models.Person, error) {
 	reqdb := db
 	if idStr != "" {
 		id, err := strconv.Atoi(idStr)

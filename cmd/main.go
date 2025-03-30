@@ -21,14 +21,15 @@ func loggingMidleware(next http.Handler) http.Handler {
 }
 
 func init() {
-	err := godotenv.Load()
+	config.LoadLoger()
+	config.Logger.Debug("Загрузка логера прошла успешно")
+	err := godotenv.Load(".\\config\\conf.env")
 	if err != nil {
 		config.Logger.Fatal("Ошибка загрузки .env файла")
 	}
-
-	config.LoadLoger()
-
+	config.Logger.Debug("Загрузка .env файла прошла успешно")
 	repository.LoadDB()
+	config.Logger.Debug("Загрузка бд прошла успешно")
 }
 
 func main() {
@@ -37,8 +38,8 @@ func main() {
 	router.Use(loggingMidleware)
 	router.HandleFunc("/people", handlers.GetPeople).Methods("GET")
 	router.HandleFunc("/people", handlers.CreatePerson).Methods("POST")
-	router.HandleFunc("/people/{id}", handlers.UpdatePerson).Methods("PUT")
-	router.HandleFunc("/people/{id}", handlers.DeletePerson).Methods("DELETE")
+	router.HandleFunc("/people", handlers.UpdatePerson).Methods("PUT")
+	router.HandleFunc("/people", handlers.DeletePerson).Methods("DELETE")
 
 	port := os.Getenv("PORT")
 	if port == "" {
