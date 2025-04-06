@@ -28,7 +28,10 @@ func LoadDB() {
 		config.Logger.Fatal("Ошибка при подключении к базе данных: ", err)
 	}
 
-	db.AutoMigrate(&models.Person{})
+	db.AutoMigrate(&models.Person{}).
+		AddIndex("idx_person_id", "id").
+		AddIndex("idx_person_name", "name").
+		AddIndex("idx_person_surname", "surname")
 
 	config.Logger.Debug("Успешно подключено к базе данных PostgreSQL")
 }

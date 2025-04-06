@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"task/config"
@@ -16,13 +17,13 @@ func response(w http.ResponseWriter, code int, data any) {
 	if data != nil {
 		err := json.NewEncoder(w).Encode(data)
 		if err != nil {
-			config.Logger.Debug(err)
+			config.Logger.Error("Ошибка кодирования ответа: ", err)
 		}
 	}
 }
 
 func responseError(w http.ResponseWriter, code int, err error) {
-	response(w, code, map[string]string{"error :": err.Error()})
+	response(w, code, map[string]string{"error": err.Error()})
 }
 
 // GetPeople godoc
@@ -41,7 +42,7 @@ func responseError(w http.ResponseWriter, code int, err error) {
 // @Param limit query int false "Лимит записей (по умолчанию 10)"
 // @Param offset query int false "Смещение для пагинации (по умолчанию 0)"
 // @Success 200 {array} models.Person
-// @Failure 500 {object} map[string]string
+// @Failure 500 {object} map[string]string "Ошибка сервера, например, при сбое подключения к базе данных"
 // @Router /people [get]
 func GetPeople(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
@@ -73,10 +74,12 @@ func GetPeople(w http.ResponseWriter, r *http.Request) {
 
 	people, err := repository.GetPeople(id, name, surname, patronymic, ageStr, gender, nationality, limit, offset)
 	if err != nil {
+		config.Logger.Error("Ошибка получения данных: ", err)
 		responseError(w, http.StatusInternalServerError, err)
 		return
 	}
 
+	config.Logger.Infof("Успешно получено %d записей", len(people))
 	response(w, http.StatusOK, people)
 }
 
@@ -88,23 +91,25 @@ func GetPeople(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param person body models.Person true "Данные нового человека"
 // @Success 201 {object} models.Person
-// @Failure 400 {object} map[string]string
-// @Failure 500 {object} map[string]string
+// @Failure 400 {object} map[string]string "Ошибка парсинга JSON в теле запроса"
+// @Failure 500 {object} map[string]string "Ошибка при обогащении данных или сохранении в базу данных"
 // @Router /people [post]
 func CreatePerson(w http.ResponseWriter, r *http.Request) {
 	var input models.Person
 
 	err := json.NewDecoder(r.Body).Decode(&input)
 	if err != nil {
-		config.Logger.Debug("Ошибка парсинга входных данных: ", err)
+		config.Logger.Error("Ошибка парсинга входных данных: ", err)
 		responseError(w, http.StatusBadRequest, err)
+		return
 	}
 	defer r.Body.Close()
 
 	age, gender, nationality, err := internal.EnrichPerson(input.Name)
 	if err != nil {
-		config.Logger.Debug("Ошибка обогащения: ", err)
+		config.Logger.Error("Ошибка обогащения: ", err)
 		responseError(w, http.StatusInternalServerError, err)
+		return
 	}
 
 	input.Age = age
@@ -113,10 +118,12 @@ func CreatePerson(w http.ResponseWriter, r *http.Request) {
 
 	err = repository.CreatePerson(input)
 	if err != nil {
-		config.Logger.Debug("Ошибка сохранения данных в БД: ", err)
+		config.Logger.Error("Ошибка сохранения данных в БД: ", err)
 		responseError(w, http.StatusInternalServerError, err)
+		return
 	}
 
+	config.Logger.Infof("Успешно создана запись для %s %s", input.Name, input.Surname)
 	response(w, http.StatusCreated, input)
 }
 
@@ -128,36 +135,37 @@ func CreatePerson(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id query int true "ID человека"
 // @Param person body models.UpdatePerson true "Данные для обновления"
-// @Success 200 {object} nil
-// @Failure 400 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
+// @Success 200 {object} map[string]string "Обновление успешно выполнено"
+// @Failure 400 {object} map[string]string "Ошибка парсинга ID или JSON в теле запроса"
+// @Failure 404 {object} map[string]string "Человек с указанным ID не найден"
+// @Failure 500 {object} map[string]string "Ошибка при обновлении данных в базе"
 // @Router /people [put]
 func UpdatePerson(w http.ResponseWriter, r *http.Request) {
 	input := new(models.UpdatePerson)
 
 	err := json.NewDecoder(r.Body).Decode(input)
 	if err != nil {
-		config.Logger.Debug("Ошибка парсинга входных данных: ", err)
+		config.Logger.Error("Ошибка парсинга входных данных: ", err)
 		responseError(w, http.StatusBadRequest, err)
+		return
 	}
 	defer r.Body.Close()
 
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))
 	if err != nil {
-		config.Logger.Debug("Ошибка парсинга id: ", err)
+		config.Logger.Error("Ошибка парсинга id: ", err)
 		responseError(w, http.StatusBadRequest, err)
+		return
 	}
 
 	existed, err := repository.GetPeople(strconv.Itoa(id), "", "", "", "", "", "", 1, 0)
-	if err != nil {
-		config.Logger.Debug("Ошибка поиска: ", err)
-		responseError(w, http.StatusNotFound, err)
+	if err != nil || len(existed) == 0 {
+		config.Logger.Error("Ошибка поиска: ", err)
+		responseError(w, http.StatusNotFound, fmt.Errorf("record not found"))
+		return
 	}
 
 	exist := existed[0]
-	config.Logger.Debug("Найденный человек ", err)
-
 	switch {
 	case input.Name != nil:
 		exist.Name = *input.Name
@@ -175,10 +183,12 @@ func UpdatePerson(w http.ResponseWriter, r *http.Request) {
 
 	err = repository.UpdatePerson(exist)
 	if err != nil {
-		config.Logger.Debug("Ошибка обновления данных в БД: ", err)
+		config.Logger.Error("Ошибка обновления данных в БД: ", err)
 		responseError(w, http.StatusInternalServerError, err)
+		return
 	}
 
+	config.Logger.Infof("Успешно обновлена запись с ID %d", id)
 	response(w, http.StatusOK, nil)
 }
 
@@ -189,22 +199,25 @@ func UpdatePerson(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param id query int true "ID человека"
-// @Success 204 {object} nil
-// @Failure 400 {object} map[string]string
-// @Failure 404 {object} map[string]string
+// @Success 204 "Запись успешно удалена"
+// @Failure 400 {object} map[string]string "Ошибка парсинга ID"
+// @Failure 404 {object} map[string]string "Человек с указанным ID не найден"
 // @Router /people [delete]
 func DeletePerson(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))
 	if err != nil {
-		config.Logger.Debug("Ошибка парсинга id: ", err)
+		config.Logger.Error("Ошибка парсинга id: ", err)
 		responseError(w, http.StatusBadRequest, err)
+		return
 	}
 
 	err = repository.DeletePerson(id)
 	if err != nil {
-		config.Logger.Debug("Ошибка удаления: ", err)
+		config.Logger.Error("Ошибка удаления: ", err)
 		responseError(w, http.StatusNotFound, err)
+		return
 	}
 
+	config.Logger.Infof("Успешно удалена запись с ID %d", id)
 	response(w, http.StatusNoContent, nil)
 }

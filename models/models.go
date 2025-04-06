@@ -18,13 +18,32 @@ type PersonWihtNationality struct {
 	} `json:"country"`
 }
 
+type Gender int
+
+const (
+	Unknown Gender = iota
+	Male
+	Female
+)
+
+func (g Gender) String() string {
+	switch g {
+	case Male:
+		return "male"
+	case Female:
+		return "female"
+	default:
+		return "unknown"
+	}
+}
+
 type Person struct {
 	Id          int    `json:"id" gorm:"primaryKey;autoIncrement"`
 	Name        string `json:"name" gorm:"type:varchar(100);not null"`
 	Surname     string `json:"surname" gorm:"type:varchar(100);not null"`
 	Patronymic  string `json:"patronymic,omitempty" gorm:"type:varchar(100)"`
 	Age         int    `json:"age,omitempty" gorm:"default:0"`
-	Gender      string `json:"gender,omitempty" gorm:"type:varchar(50)"`
+	Gender      Gender `json:"gender,omitempty" gorm:"type:integer"`
 	Nationality string `json:"nationality,omitempty" gorm:"type:varchar(50)"`
 }
 
@@ -33,6 +52,6 @@ type UpdatePerson struct {
 	Surname     *string `json:"surname,omitempty"`
 	Patronymic  *string `json:"patronymic,omitempty"`
 	Age         *int    `json:"age,omitempty"`
-	Gender      *string `json:"gender,omitempty"`
+	Gender      *Gender `json:"gender,omitempty"`
 	Nationality *string `json:"nationality,omitempty"`
 }

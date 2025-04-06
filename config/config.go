@@ -8,6 +8,10 @@ import (
 
 var Logger *logrus.Logger
 
+var NationalizeURL string = "https://api.nationalize.io"
+var GenderizeURL string = "https://api.genderize.io"
+var AgifyURL string = "https://api.agify.io"
+
 func LoadLoger() {
 
 	Logger = logrus.New()

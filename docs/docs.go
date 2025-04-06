@@ -95,7 +95,7 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Ошибка сервера, например, при сбое подключения к базе данных",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -137,10 +137,16 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK"
+                        "description": "Обновление успешно выполнено",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка парсинга ID или JSON в теле запроса",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -149,7 +155,7 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Человек с указанным ID не найден",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -158,7 +164,7 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Ошибка при обновлении данных в базе",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -199,7 +205,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка парсинга JSON в теле запроса",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -208,7 +214,7 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Ошибка при обогащении данных или сохранении в базу данных",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -241,10 +247,10 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "204": {
-                        "description": "No Content"
+                        "description": "Запись успешно удалена"
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Ошибка парсинга ID",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -253,7 +259,7 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Человек с указанным ID не найден",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -266,6 +272,19 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "models.Gender": {
+            "type": "integer",
+            "enum": [
+                0,
+                1,
+                2
+            ],
+            "x-enum-varnames": [
+                "Unknown",
+                "Male",
+                "Female"
+            ]
+        },
         "models.Person": {
             "type": "object",
             "properties": {
@@ -273,7 +292,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "gender": {
-                    "type": "string"
+                    "$ref": "#/definitions/models.Gender"
                 },
                 "id": {
                     "type": "integer"
@@ -299,7 +318,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "gender": {
-                    "type": "string"
+                    "$ref": "#/definitions/models.Gender"
                 },
                 "name": {
                     "type": "string"

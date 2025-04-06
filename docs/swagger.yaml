@@ -1,10 +1,20 @@
 definitions:
+  models.Gender:
+    enum:
+    - 0
+    - 1
+    - 2
+    type: integer
+    x-enum-varnames:
+    - Unknown
+    - Male
+    - Female
   models.Person:
     properties:
       age:
         type: integer
       gender:
-        type: string
+        $ref: '#/definitions/models.Gender'
       id:
         type: integer
       name:
@@ -21,7 +31,7 @@ definitions:
       age:
         type: integer
       gender:
-        type: string
+        $ref: '#/definitions/models.Gender'
       name:
         type: string
       nationality:
@@ -49,15 +59,15 @@ paths:
       - application/json
       responses:
         "204":
-          description: No Content
+          description: Запись успешно удалена
         "400":
-          description: Bad Request
+          description: Ошибка парсинга ID
           schema:
             additionalProperties:
               type: string
             type: object
         "404":
-          description: Not Found
+          description: Человек с указанным ID не найден
           schema:
             additionalProperties:
               type: string
@@ -117,7 +127,7 @@ paths:
               $ref: '#/definitions/models.Person'
             type: array
         "500":
-          description: Internal Server Error
+          description: Ошибка сервера, например, при сбое подключения к базе данных
           schema:
             additionalProperties:
               type: string
@@ -145,13 +155,13 @@ paths:
           schema:
             $ref: '#/definitions/models.Person'
         "400":
-          description: Bad Request
+          description: Ошибка парсинга JSON в теле запроса
           schema:
             additionalProperties:
               type: string
             type: object
         "500":
-          description: Internal Server Error
+          description: Ошибка при обогащении данных или сохранении в базу данных
           schema:
             additionalProperties:
               type: string
@@ -180,21 +190,25 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Обновление успешно выполнено
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "400":
-          description: Bad Request
+          description: Ошибка парсинга ID или JSON в теле запроса
           schema:
             additionalProperties:
               type: string
             type: object
         "404":
-          description: Not Found
+          description: Человек с указанным ID не найден
           schema:
             additionalProperties:
               type: string
             type: object
         "500":
-          description: Internal Server Error
+          description: Ошибка при обновлении данных в базе
           schema:
             additionalProperties:
               type: string
